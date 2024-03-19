@@ -18,6 +18,8 @@ class ViewController: UIViewController, WKNavigationDelegate {
     
     // used to visually represent the progress of a task.
     var progressView: UIProgressView!
+    
+    var webSites = ["apple.com", "hackingwithswift.com"]
 
     // is called when the view controller's view is requested but not yet loaded.
     override func loadView() {
@@ -34,6 +36,10 @@ class ViewController: UIViewController, WKNavigationDelegate {
         
         // Create the Open button to selecte each site web you want.
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Open", style: .plain, target: self, action: #selector(openTapped))
+        // back button.
+        let backItem = UIBarButtonItem(title: "Back", style: .plain, target: self, action: #selector(goBack))
+        // forward button.
+        let forwardItem = UIBarButtonItem(title: "Forward", style: .plain, target: self, action: #selector(goForward))
         
         // the button will be a flexible space item, which means it will expand to fill the available space in the toolbar.
         // nil indicates that this button doesn't have a target or action associated with it.
@@ -55,7 +61,7 @@ class ViewController: UIViewController, WKNavigationDelegate {
          spacer and refresh buttons to the toolbarItems property of the view controller.
          This array defines the items to be displayed in the toolbar.
          */
-        toolbarItems = [progressButton, spacer, refresh]
+        toolbarItems = [backItem,progressButton, spacer, refresh, forwardItem]
         
         // The view controller (presumably self) will be notified of changes to the estimatedProgress property. When the estimated progress changes, it can update the UI accordingly, such as updating the progress view's progress value.
         //
@@ -64,7 +70,7 @@ class ViewController: UIViewController, WKNavigationDelegate {
         // This ensures that the toolbar is not hidden and will be displayed at the bottom of the screen.
         navigationController?.isToolbarHidden = false
         // creates a URL object.
-        let url = URL(string: "https://www.1337.ma/")!
+        let url = URL(string: "https://" + webSites[0])!
         // creates a new URLRequest.
         // webView.load(...): This method of WKWebView is used to load the content specified by the provided URLRequest.
         webView.load(URLRequest(url: url))
@@ -76,7 +82,10 @@ class ViewController: UIViewController, WKNavigationDelegate {
     @objc func  openTapped() {
         let ac = UIAlertController(title: "Open Page...", message: nil, preferredStyle: .actionSheet)
         
-        ac.addAction(UIAlertAction(title: "apple.com", style: .default, handler: openPage))
+        for webSite in webSites {
+            ac.addAction(UIAlertAction(title: webSite, style: .default, handler: openPage))
+        }
+
         ac.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         // presentation controller to be displayed on iPad.
         ac.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItem
@@ -98,11 +107,48 @@ class ViewController: UIViewController, WKNavigationDelegate {
         title = webView.title
     }
     
+    // "estimatedProgress" It is a floating-point value ranging from 0.0 to 1.0, where 0.0 indicates that no content has been loaded and 1.0 indicates that all content has been loaded.
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
         if keyPath == "estimatedProgress" {
             progressView.progress = Float(webView.estimatedProgress)
         }
     }
-
+    
+    // ########################################################################################################################################################### //
+    // this function is responsible for inspecting navigation actions in the web view and allowing or canceling them based on a predefined list of safe websites.  //
+    // is part of the WKNavigationDelegate protocol, which is used to handle various events related to web navigation in a WKWebView instance.                     //
+    // decisionHandler: a closure to allow or cancel the navigation action.                                                                                        //
+    // that method inspect the URL being navigated to and decide whether it's safe to proceed.                                                                     //
+    // @escaping keyword in Swift is used to indicate that a closure parameter can outlive the scope of the function it's passed into.                             //
+    // ########################################################################################################################################################### //
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        
+        // retrieves the URL associated with the navigation action.
+        let url = navigationAction.request.url
+        // we're checking if the URL's host (domain) exists.
+        if let host = url?.host {
+            for website in webSites {
+                // If the host contains one of the whitelisted websites, we call decisionHandler(.allow)
+                if host.contains(website) {
+                    decisionHandler(.allow)
+                    return
+                }
+            }
+        }
+        /*
+         If the URL host doesn't match any of the whitelisted websites, we call decisionHandler(.cancel) to cancel the navigation.
+         This prevents the web view from navigating to the URL, effectively blocking access to unauthorized websites.
+         */
+        decisionHandler(.cancel)
+    }
+    // Back Button.
+    @objc func goBack() {
+        webView.goBack()
+    }
+    
+    // Fowrward Button.
+    @objc func  goForward() {
+        webView.goForward()
+    }
 }
 
