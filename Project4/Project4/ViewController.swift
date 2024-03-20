@@ -19,7 +19,7 @@ class ViewController: UIViewController, WKNavigationDelegate {
     // used to visually represent the progress of a task.
     var progressView: UIProgressView!
     
-    var webSites = ["apple.com", "hackingwithswift.com"]
+    var webSites = ["www.apple.com", "www.hackingwithswift.com", "1337.ma"]
 
     // is called when the view controller's view is requested but not yet loaded.
     override func loadView() {
@@ -69,6 +69,7 @@ class ViewController: UIViewController, WKNavigationDelegate {
     
         // This ensures that the toolbar is not hidden and will be displayed at the bottom of the screen.
         navigationController?.isToolbarHidden = false
+        
         // creates a URL object.
         let url = URL(string: "https://" + webSites[0])!
         // creates a new URLRequest.
@@ -122,24 +123,28 @@ class ViewController: UIViewController, WKNavigationDelegate {
     // @escaping keyword in Swift is used to indicate that a closure parameter can outlive the scope of the function it's passed into.                             //
     // ########################################################################################################################################################### //
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        
-        // retrieves the URL associated with the navigation action.
-        let url = navigationAction.request.url
-        // we're checking if the URL's host (domain) exists.
-        if let host = url?.host {
-            for website in webSites {
-                // If the host contains one of the whitelisted websites, we call decisionHandler(.allow)
-                if host.contains(website) {
-                    decisionHandler(.allow)
-                    return
-                }
-            }
+        // Retrieves the URL associated with the navigation action.
+        guard let url = navigationAction.request.url, let host = url.host else {
+            // If the URL or its host is nil, allow the navigation.
+            decisionHandler(.allow)
+            return
         }
-        /*
-         If the URL host doesn't match any of the whitelisted websites, we call decisionHandler(.cancel) to cancel the navigation.
-         This prevents the web view from navigating to the URL, effectively blocking access to unauthorized websites.
-         */
-        decisionHandler(.cancel)
+
+        // Print the host for debugging purposes.
+        print("Host: \(host)")
+
+        // Check if the host is allowed.
+        let allowedHosts = ["www.apple.com", "www.hackingwithswift.com"]
+        if allowedHosts.contains(host) {
+            // If the host is allowed, allow the navigation.
+            decisionHandler(.allow)
+        } else {
+            // If the host is not allowed, present an alert and cancel the navigation.
+            let alertController = UIAlertController(title: "Blocked", message: "This website is not allowed.", preferredStyle: .alert)
+            alertController.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+            present(alertController, animated: true, completion: nil)
+            decisionHandler(.cancel)
+        }
     }
     // Back Button.
     @objc func goBack() {
