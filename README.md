@@ -1,6 +1,6 @@
 # UIKit
 
-![Swift Logo](https://cdn-icons-png.flaticon.com/256/919/919833.png)
+![UIKit Logo](https://cdn3.iconfinder.com/data/icons/logos-and-brands-adobe/512/349_Uikit-512.png)
 
 # I've built a simple browser using the WebKit framework, empowering users to browse a curated list of websites seamlessly.
 ![Page 1](1.png)
